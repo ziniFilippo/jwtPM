@@ -1,0 +1,17 @@
+RewriteEngine on
+
+# If the application is not in the root directory
+# Replace /www with / if your application is at the root of your domain
+RewriteBase /www
+
+# If the request is for the root directory
+RewriteRule ^$ public/ [L]
+
+# If the request is for a file or directory that exists
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+# Do not redirect the request
+RewriteRule ^ - [L]
+
+# If the request is for a file or directory that does not exist
+RewriteRule ^(.*)$ public/index.php [L]
