@@ -30,20 +30,35 @@ class AuthController
 
         // Your authentication logic goes here...
         // For example:
-        if ($username === 'admin' && $password === 'password') {
-            // Generate and return the JWT token
-            $token = $this->generateToken(
-                [
-                    'username' => $username, 
-                    'profilo' => 
-                        [
-                            'nome' => 'Mario',
-                            'cognome' => 'Rossi'
-                        ],
-                ]);
-            return $response->withJson(['token' => $token]);
-        } else {
+        // Check if the username and password are correct on the database
+        
+        //mysql connection
+        $db = new \PDO('mysql:host=localhost;dbname=jwt', 'root', '');
+
+        $stmt = $db->prepare("SELECT nome, cognome, md5, salt FROM users WHERE username = :username");
+        $stmt->execute(['username' => $username]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
             return $response->withStatus(401)->withJson(['error' => 'Invalid username or password']);
+        }else{
+            $salt = $user['salt'];
+            $hash = md5($password . $salt);
+            if ($hash !== $user['md5']) {
+                return $response->withStatus(401)->withJson(['error' => 'Invalid username or password']);
+            }else{
+                // Generate and return the JWT token
+                $token = $this->generateToken(
+                    [
+                        'username' => $username, 
+                        'profilo' => 
+                            [
+                                'nome' => $user['nome'],
+                                'cognome' => $user['cognome']
+                            ],
+                    ]);
+                return $response->withJson(['token' => $token]);
+            }
         }
     }
 
