@@ -2,14 +2,11 @@
 
 namespace App\Controllers;
 
-use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-
+use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Container\ContainerInterface;
-
-
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+
 
 
 class AuthController
@@ -33,9 +30,9 @@ class AuthController
         // Check if the username and password are correct on the database
         
         //mysql connection
-        $db = new \PDO('mysql:host=localhost;dbname=jwt', 'root', '');
+        $db = new \PDO('mysql:host=localhost;dbname=PM', 'root', '');
 
-        $stmt = $db->prepare("SELECT nome, cognome, md5, salt FROM users WHERE username = :username");
+        $stmt = $db->prepare("SELECT MAIL, SHA3, salt FROM ACCOUNT WHERE MAIL = :username");
         $stmt->execute(['username' => $username]);
         $user = $stmt->fetch();
 
@@ -44,7 +41,7 @@ class AuthController
         }else{
             $salt = $user['salt'];
             $hash = md5($password . $salt);
-            if ($hash !== $user['md5']) {
+            if ($hash !== $user['SHA3']) {
                 return $response->withStatus(401)->withJson(['error' => 'Invalid username or password']);
             }else{
                 // Generate and return the JWT token
@@ -53,10 +50,10 @@ class AuthController
                         'username' => $username, 
                         'profilo' => 
                             [
-                                'nome' => $user['nome'],
-                                'cognome' => $user['cognome']
+                                'nome' => $user['MAIL'],
                             ],
                     ]);
+                    setcookie('jwt', $token, time() + 3600, '/', '', false, true);
                 return $response->withJson(['token' => $token]);
             }
         }
